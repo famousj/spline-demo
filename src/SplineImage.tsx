@@ -62,14 +62,31 @@ const SplineImage: React.FC = () => {
 
   }
 
-  useEffect(() => {
-    console.log(`Points is now: ${JSON.stringify(points)}`);
+  function addSpline<T extends Selection>(svg: T) {
+  }
 
+  useEffect(() => {
     if (!svgRef.current) { return };
       const svg = d3.select(svgRef.current);
      
       svg.selectAll('g').remove();
-      svg.selectAll('.spline-path').remove();
+      svg.selectAll('path').remove();
+
+      if (points.length >= 3) {
+        // Create cardinal spline
+        const lineGenerator = d3.line<SplinePoint>()
+          .x(d => d.x)
+          .y(d => d.y)
+          .curve(d3.curveCardinalClosed.tension(tension));
+         
+        svg.append("path")
+          .datum(points)
+          .attr("d", lineGenerator)
+          .attr("fill", "none")
+          .attr("stroke", pointColor)
+          .attr("stroke-width", 2)
+          .attr('opacity', 0.7);
+      };
 
       const pointGroup = svg.selectAll('g')
         .data(points)
@@ -94,19 +111,6 @@ const SplineImage: React.FC = () => {
         .attr('dominant-baseline', 'middle')
         .attr('fill', 'black')
         .text(d => d.index.toString());
-       
-      const line = d3.line()
-        .curve(d3.curveCardinalClosed.tension(tension));
-       
-     
-      svg.append('path')
-        .datum(points)
-        .attr('d', line)
-        .attr('class', 'spline-path')
-        .attr('fill', 'none')
-        .attr('stroke', 'red')
-        .attr('stroke-width', 3);
-
   }, [points]);
 
   return (

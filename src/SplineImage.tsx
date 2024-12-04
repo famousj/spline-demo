@@ -133,3 +133,49 @@ const SplineImage: React.FC = () => {
 };
 
 export default SplineImage;
+
+
+
+function doLinesIntersect(
+  p1: [number, number], 
+  p2: [number, number], 
+  p3: [number, number], 
+  p4: [number, number]
+): boolean {
+  const CCW = (A: [number, number], B: [number, number], C: [number, number]) => {
+    return (C[1] - A[1]) * (B[0] - A[0]) > (B[1] - A[1]) * (C[0] - A[0]);
+  };
+
+  return (
+    CCW(p1, p3, p4) !== CCW(p2, p3, p4) && 
+    CCW(p1, p2, p3) !== CCW(p1, p2, p4)
+  );
+}
+
+function hasSplineSelfIntersection(points: SplinePoint[]): boolean {Lal
+  const n = points.length;
+  
+  // Need at least 4 points to have a self-intersection
+  if (n < 4) return false;
+
+  // Check every pair of non-adjacent line segments
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 2; j < n; j++) {
+      // Skip adjacent segments and wrap around for closed spline
+      if (
+        i === 0 && j === n - 1 // Skip connecting segment
+      ) continue;
+
+      const p1: [number, number] = [points[i].x, points[i].y];
+      const p2: [number, number] = [points[(i + 1) % n].x, points[(i + 1) % n].y];
+      const p3: [number, number] = [points[j].x, points[j].y];
+      const p4: [number, number] = [points[(j + 1) % n].x, points[(j + 1) % n].y];
+
+      if (doLinesIntersect(p1, p2, p3, p4)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}

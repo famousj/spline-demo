@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import TensionSelector from './TensionSelector';
 import * as d3 from 'd3';
 
 interface SplinePoint {
@@ -9,13 +10,13 @@ interface SplinePoint {
 
 const SplineImage: React.FC = () => {
   const [points, setPoints] = useState<SplinePoint[]>([]);
+  const [tension, setTension] = useState<number>(0.5);
   //const [intersections, setIntersections] = useState<{x: number, y: number}[]>([]);
 
   const svgRef = useRef<SVGSVGElement>(null);
 
   const imageUrl = 'https://www.eu-focus.europeanurology.com/cms/10.1016/j.euf.2015.06.003/asset/c0a002b8-7205-4248-b3bd-342bfb5a4161/main.assets/gr1.jpg';
   const pointRadius = 10;
-  const tension = 0.5;
 
   const pointColor = "yellow";
   const pointOutlineColor = "black";
@@ -129,7 +130,7 @@ const SplineImage: React.FC = () => {
         .attr('dominant-baseline', 'middle')
         .attr('fill', 'black')
         .text(d => d.index.toString());
-  }, [points]);
+  }, [points, tension]);
 
   return (
     <div className="w-full max-w-[50vw] mx-auto p-4">
@@ -146,6 +147,13 @@ const SplineImage: React.FC = () => {
           className="absolute top-0 left-0 w-full h-full pointer-events-none"
         />
       </div>
+      <div className="flex justify-between items-center">
+        <TensionSelector 
+          tension={tension} 
+          onTensionChange={setTension}
+        />
+      </div>
+
     </div>
   );
 };

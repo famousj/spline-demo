@@ -1,12 +1,9 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import TensionSelector from './TensionSelector';
 import * as d3 from 'd3';
 
-interface SplinePoint {
-  x: number;
-  y: number;
-  index: number;
-}
+import TensionSelector from './TensionSelector';
+import SplinePoint from './SplinePoint';
+import * as splinemath from './splinemath';
 
 const SplineImage: React.FC = () => {
   const [points, setPoints] = useState<SplinePoint[]>([]);
@@ -92,7 +89,7 @@ const SplineImage: React.FC = () => {
           .attr('opacity', 0.7);
       };
       
-      const intersections = findSelfIntersections(points);
+      const intersections = splinemath.findSelfIntersections(points);
 
       // Render intersection points
       if (intersections.length > 0) {
@@ -101,8 +98,8 @@ const SplineImage: React.FC = () => {
           .enter()
           .append('circle')
           .attr('class', 'intersection-point')
-          .attr('cx', d => d.x)
-          .attr('cy', d => d.y)
+          .attr('cx', d => d.point.x)
+          .attr('cy', d => d.point.y)
           .attr('r', 10)
           .attr('fill', 'green');
       }
@@ -159,100 +156,3 @@ const SplineImage: React.FC = () => {
 };
 
 export default SplineImage;
-
-// Bentley-Ottmann Algorithm implementation
-function findSelfIntersections(points: SplinePoint[]): {x: number, y: number}[] {
-  console.log("Checking for intersections for " + JSON.stringify(points));
-
-  // If fewer than 4 points, no self-intersection possible
-  if (points.length < 4) return [];
-
-  // Convert points to line segments
-  const segments = points.map((point, i) => ({
-    start: point,
-    end: points[(i + 1) % points.length],
-    id: i
-  }));
-
-  // Utility function to compute orientation
-  const orientation = (p: SplinePoint, q: SplinePoint, r: SplinePoint) => {
-    const val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
-    if (val === 0) return 0;  // Collinear
-    return val > 0 ? 1 : 2;  // Clockwise or Counterclockwise
-  };
-
-  // Check if line segments intersect
-  const doIntersect = (seg1: any, seg2: any) => {
-    const p1 = seg1.start, q1 = seg1.end;
-    const p2 = seg2.start, q2 = seg2.end;
-
-    const o1 = orientation(p1, q1, p2);
-    const o2 = orientation(p1, q1, q2);
-    const o3 = orientation(p2, q2, p1);
-    const o4 = orientation(p2, q2, q1);
-
-    // General case
-    if (o1 !== o2 && o3 !== o4) return true;
-
-    // Special Cases (collinear)
-    if (o1 === 0 && onSegment(p1, p2, q1)) return true;
-    if (o2 === 0 && onSegment(p1, q2, q1)) return true;
-    if (o3 === 0 && onSegment(p2, p1, q2)) return true;
-    if (o4 === 0 && onSegment(p2, q1, q2)) return true;
-
-    return false;
-  };
-
-  // Check if point q lies on line segment pr
-  const onSegment = (p: SplinePoint, q: SplinePoint, r: SplinePoint) => {
-    return (
-      q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) &&
-      q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y)
-    );
-  };
-
-  // Compute intersection point
-  const computeIntersection = (seg1: any, seg2: any) => {
-    const p1 = seg1.start, q1 = seg1.end;
-    const p2 = seg2.start, q2 = seg2.end;
-
-    const x1 = p1.x, y1 = p1.y;
-    const x2 = q1.x, y2 = q1.y;
-    const x3 = p2.x, y3 = p2.y;
-    const x4 = q2.x, y4 = q2.y;
-
-    const denom = ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
-    if (denom === 0) return null;  // Parallel lines
-
-    const ua = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / denom;
-    const ub = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / denom;
-
-    // Ensure intersection is within both line segments
-    if (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) {
-      return {
-        x: x1 + ua * (x2 - x1),
-        y: y1 + ua * (y2 - y1)
-      };
-    }
-
-    return null;
-  };
-
-  // Find intersections, avoiding adjacent segments
-  const intersections: {x: number, y: number}[] = [];
-  for (let i = 0; i < segments.length; i++) {
-    for (let j = i + 2; j < segments.length; j++) {
-      // Wrap around for closed spline
-      if (i === 0 && j === segments.length - 1) continue;
-
-      if (doIntersect(segments[i], segments[j])) {
-        const intersect = computeIntersection(segments[i], segments[j]);
-        if (intersect) intersections.push(intersect);
-      }
-    }
-  }
-
-  console.log(`Found intersections ${JSON.stringify(intersections)}`);
-
-  return intersections;
-}

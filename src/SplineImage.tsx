@@ -9,6 +9,8 @@ interface SplinePoint {
 
 const SplineImage: React.FC = () => {
   const [points, setPoints] = useState<SplinePoint[]>([]);
+  //const [intersections, setIntersections] = useState<{x: number, y: number}[]>([]);
+
   const svgRef = useRef<SVGSVGElement>(null);
 
   const imageUrl = 'https://www.eu-focus.europeanurology.com/cms/10.1016/j.euf.2015.06.003/asset/c0a002b8-7205-4248-b3bd-342bfb5a4161/main.assets/gr1.jpg';
@@ -71,6 +73,7 @@ const SplineImage: React.FC = () => {
      
       svg.selectAll('g').remove();
       svg.selectAll('path').remove();
+      svg.selectAll('.intersection-point').remove();
 
       if (points.length >= 3) {
         // Create cardinal spline
@@ -87,6 +90,21 @@ const SplineImage: React.FC = () => {
           .attr("stroke-width", 2)
           .attr('opacity', 0.7);
       };
+      
+      const intersections = findSelfIntersections(points);
+
+      // Render intersection points
+      if (intersections.length > 0) {
+        svg.selectAll('.intersection-point')
+          .data(intersections)
+          .enter()
+          .append('circle')
+          .attr('class', 'intersection-point')
+          .attr('cx', d => d.x)
+          .attr('cy', d => d.y)
+          .attr('r', 10)
+          .attr('fill', 'green');
+      }
 
       const pointGroup = svg.selectAll('g')
         .data(points)
@@ -134,48 +152,99 @@ const SplineImage: React.FC = () => {
 
 export default SplineImage;
 
+// Bentley-Ottmann Algorithm implementation
+function findSelfIntersections(points: SplinePoint[]): {x: number, y: number}[] {
+  console.log("Checking for intersections for " + JSON.stringify(points));
 
+  // If fewer than 4 points, no self-intersection possible
+  if (points.length < 4) return [];
 
-function doLinesIntersect(
-  p1: [number, number], 
-  p2: [number, number], 
-  p3: [number, number], 
-  p4: [number, number]
-): boolean {
-  const CCW = (A: [number, number], B: [number, number], C: [number, number]) => {
-    return (C[1] - A[1]) * (B[0] - A[0]) > (B[1] - A[1]) * (C[0] - A[0]);
+  // Convert points to line segments
+  const segments = points.map((point, i) => ({
+    start: point,
+    end: points[(i + 1) % points.length],
+    id: i
+  }));
+
+  // Utility function to compute orientation
+  const orientation = (p: SplinePoint, q: SplinePoint, r: SplinePoint) => {
+    const val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+    if (val === 0) return 0;  // Collinear
+    return val > 0 ? 1 : 2;  // Clockwise or Counterclockwise
   };
 
-  return (
-    CCW(p1, p3, p4) !== CCW(p2, p3, p4) && 
-    CCW(p1, p2, p3) !== CCW(p1, p2, p4)
-  );
-}
+  // Check if line segments intersect
+  const doIntersect = (seg1: any, seg2: any) => {
+    const p1 = seg1.start, q1 = seg1.end;
+    const p2 = seg2.start, q2 = seg2.end;
 
-function hasSplineSelfIntersection(points: SplinePoint[]): boolean {Lal
-  const n = points.length;
-  
-  // Need at least 4 points to have a self-intersection
-  if (n < 4) return false;
+    const o1 = orientation(p1, q1, p2);
+    const o2 = orientation(p1, q1, q2);
+    const o3 = orientation(p2, q2, p1);
+    const o4 = orientation(p2, q2, q1);
 
-  // Check every pair of non-adjacent line segments
-  for (let i = 0; i < n; i++) {
-    for (let j = i + 2; j < n; j++) {
-      // Skip adjacent segments and wrap around for closed spline
-      if (
-        i === 0 && j === n - 1 // Skip connecting segment
-      ) continue;
+    // General case
+    if (o1 !== o2 && o3 !== o4) return true;
 
-      const p1: [number, number] = [points[i].x, points[i].y];
-      const p2: [number, number] = [points[(i + 1) % n].x, points[(i + 1) % n].y];
-      const p3: [number, number] = [points[j].x, points[j].y];
-      const p4: [number, number] = [points[(j + 1) % n].x, points[(j + 1) % n].y];
+    // Special Cases (collinear)
+    if (o1 === 0 && onSegment(p1, p2, q1)) return true;
+    if (o2 === 0 && onSegment(p1, q2, q1)) return true;
+    if (o3 === 0 && onSegment(p2, p1, q2)) return true;
+    if (o4 === 0 && onSegment(p2, q1, q2)) return true;
 
-      if (doLinesIntersect(p1, p2, p3, p4)) {
-        return true;
+    return false;
+  };
+
+  // Check if point q lies on line segment pr
+  const onSegment = (p: SplinePoint, q: SplinePoint, r: SplinePoint) => {
+    return (
+      q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) &&
+      q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y)
+    );
+  };
+
+  // Compute intersection point
+  const computeIntersection = (seg1: any, seg2: any) => {
+    const p1 = seg1.start, q1 = seg1.end;
+    const p2 = seg2.start, q2 = seg2.end;
+
+    const x1 = p1.x, y1 = p1.y;
+    const x2 = q1.x, y2 = q1.y;
+    const x3 = p2.x, y3 = p2.y;
+    const x4 = q2.x, y4 = q2.y;
+
+    const denom = ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+    if (denom === 0) return null;  // Parallel lines
+
+    const ua = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / denom;
+    const ub = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / denom;
+
+    // Ensure intersection is within both line segments
+    if (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) {
+      return {
+        x: x1 + ua * (x2 - x1),
+        y: y1 + ua * (y2 - y1)
+      };
+    }
+
+    return null;
+  };
+
+  // Find intersections, avoiding adjacent segments
+  const intersections: {x: number, y: number}[] = [];
+  for (let i = 0; i < segments.length; i++) {
+    for (let j = i + 2; j < segments.length; j++) {
+      // Wrap around for closed spline
+      if (i === 0 && j === segments.length - 1) continue;
+
+      if (doIntersect(segments[i], segments[j])) {
+        const intersect = computeIntersection(segments[i], segments[j]);
+        if (intersect) intersections.push(intersect);
       }
     }
   }
 
-  return false;
+  console.log(`Found intersections ${JSON.stringify(intersections)}`);
+
+  return intersections;
 }

@@ -1,30 +1,11 @@
 import Point from './Point';
 import SplinePoint from './SplinePoint';
+import Segment from './Segment';
 
 export interface Intersection {
   segment1: Segment,
   segment2: Segment,
   point: Point,
-}
-
-// TODO: Move Segment to its own thing
-export class Segment {
-  constructor(public p: SplinePoint, public q: SplinePoint) {}
-
-  startIndex(): number {
-    if (this.p.index === 0) {
-      return this.q.index;
-    } else if (this.q.index === 0) {
-      return this.p.index;
-    } else {
-      return Math.min(this.p.index, this.q.index);
-    }
-  }
-
-  endIndex(): number {
-    if (this.p.index == 0 || this.q.index == 0) { return 0; }
-    return Math.max(this.p.index, this.q.index);
-  }
 }
 
 enum Orientation {

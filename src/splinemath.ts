@@ -7,9 +7,24 @@ export interface Intersection {
   point: Point,
 }
 
-export interface Segment {
-  start: SplinePoint,
-  end: SplinePoint,
+// TODO: Move Segment to its own thing
+export class Segment {
+  constructor(public p: SplinePoint, public q: SplinePoint) {}
+
+  startIndex(): number {
+    if (this.p.index === 0) {
+      return this.q.index;
+    } else if (this.q.index === 0) {
+      return this.p.index;
+    } else {
+      return Math.min(this.p.index, this.q.index);
+    }
+  }
+
+  endIndex(): number {
+    if (this.p.index == 0 || this.q.index == 0) { return 0; }
+    return Math.max(this.p.index, this.q.index);
+  }
 }
 
 enum Orientation {
@@ -25,8 +40,8 @@ function getOrientation(p: Point, q: Point, r: Point): Orientation {
 }
 
 function doIntersect(seg1: Segment, seg2: Segment): boolean {
-  const p1 = seg1.start, q1 = seg1.end;
-  const p2 = seg2.start, q2 = seg2.end;
+  const p1 = seg1.p, q1 = seg1.q;
+  const p2 = seg2.p, q2 = seg2.q;
 
   const o1 = getOrientation(p1, q1, p2);
   const o2 = getOrientation(p1, q1, q2);
@@ -54,8 +69,8 @@ function onSegment(p: Point, q: Point, r: Point) {
 }
 
 function computeIntersectionPoint(seg1: Segment, seg2: Segment): Point | undefined {
-  const p1 = seg1.start, q1 = seg1.end;
-  const p2 = seg2.start, q2 = seg2.end;
+  const p1 = seg1.p, q1 = seg1.q;
+  const p2 = seg2.p, q2 = seg2.q;
  
   const x1 = p1.x, y1 = p1.y;
   const x2 = q1.x, y2 = q1.y;
@@ -86,11 +101,7 @@ export function findSelfIntersections(points: SplinePoint[]): Intersection[] {
   if (points.length < 4) return [];
 
   // Convert points to line segments
-  const segments: Segment[] = points.map((point, i) => ({
-    start: point,
-    end: points[(i + 1) % points.length],
-    id: i
-  }));
+  const segments: Segment[] = points.map((point, i) => new Segment(point, points[(i + 1) % points.length]));
 
   // Find intersections, avoiding adjacent segments
   const intersections: Intersection[] = [];
@@ -119,53 +130,65 @@ export function findSelfIntersections(points: SplinePoint[]): Intersection[] {
   return intersections;
 }
 
-function reverseSplinePoints(points: SplinePoint[], start: number, end: number): SplinePoint[] {
-  console.log(`Reversing points from ${start} to ${end}`);
-  // Extract the portion to reverse
-  let subArray = points.slice(start, end + 1);
-  console.log(`Subarray: ${JSON.stringify(subArray)}`);
+function reverseSubarray<T>(arr: T[], i: number, j: number): T[] {
+    const n = arr.length;
 
-  // Reverse the extracted portion
-  subArray.reverse();
-  console.log(`Subarray reversed: ${JSON.stringify(subArray)}`);
+    // Function to reverse a portion of an array in place
+    function reversePortion(array: T[], start: number, end: number) {
+        while (start < end) {
+            [array[start], array[end]] = [array[end], array[start]];
+            start++;
+            end--;
+        }
+    }
 
-  let newPoints = points;
-  newPoints.splice(start, subArray.length, ...subArray);
-  console.log(`newPoints: ${JSON.stringify(newPoints)}`);
+    if (i <= j) {
+        // Simple case: i <= j, reverse directly
+        reversePortion(arr, i, j);
+    } else {
+        // Wrap-around case: i > j
+        // Reverse from i to end and from start to j
+        reversePortion(arr, i, n - 1);
+        reversePortion(arr, 0, j);
+        // Reverse the entire range to fix order
+        reversePortion(arr, 0, n - 1);
+    }
 
-  newPoints = newPoints
-    .map((p, index) => ({...p, index}));
-  console.log(`newPoints reindexed: ${JSON.stringify(newPoints)}`);
+    return arr;
+}
 
-  return newPoints;
+function getPointCount(length: number, start: number, end: number): number {
+  return 0;
 }
 
 export function fixIntersection(points: SplinePoint[], intersection: Intersection): SplinePoint[] {
   const indices = [
-    intersection.segment1.start.index,
-    intersection.segment1.end.index,
-    intersection.segment2.start.index,
-    intersection.segment2.end.index,
+    intersection.segment1.startIndex(),
+    intersection.segment1.endIndex(),
+    intersection.segment2.startIndex(),
+    intersection.segment2.endIndex(),
   ];
-  const start = Math.min(...indices);
-  const end = Math.max(...indices);
+  const start = intersection.segment1.endIndex();
+  const end = intersection.segment2.startIndex();
 
   console.log(`Intersection starts at ${start} and ends at ${end}`);
 
-  const first = (start + 1) % points.length;
-  const last = (end - 1);
-
-  return reverseSplinePoints(points, first, last);
+  let newPoints = reverseSubarray([...points], start, end)
+    .map((p, index) => ({...p, index}));
+  console.log(`Updated points to ${JSON.stringify(newPoints)}`);
+  return newPoints;
 }
 
 // LeBlanc Algorithm implementation
 export function untangleSpline(points: SplinePoint[]): SplinePoint[] {
   let updatedPoints = points;
-  let intersections = findSelfIntersections(updatedPoints);
-
-  if (intersections.length > 0) {
+  let intersections: Intersection[] = findSelfIntersections(updatedPoints);
+ 
+  while (intersections.length > 0) {
     const intersection = intersections[0];
     updatedPoints = fixIntersection(updatedPoints, intersection);
+
+    intersections = findSelfIntersections(updatedPoints);
   }
 
   return updatedPoints;

@@ -53,7 +53,7 @@ function onSegment(p: Point, q: Point, r: Point) {
   );
 }
 
-function computeIntersectionPoint(seg1: any, seg2: any): Point | undefined {
+function computeIntersectionPoint(seg1: Segment, seg2: Segment): Point | undefined {
   const p1 = seg1.start, q1 = seg1.end;
   const p2 = seg2.start, q2 = seg2.end;
  
@@ -79,7 +79,6 @@ function computeIntersectionPoint(seg1: any, seg2: any): Point | undefined {
   return undefined;
 };
 
-// Bentley-Ottmann Algorithm implementation
 export function findSelfIntersections(points: SplinePoint[]): Intersection[] {
   console.log("Checking for intersections for " + JSON.stringify(points));
 
@@ -118,4 +117,56 @@ export function findSelfIntersections(points: SplinePoint[]): Intersection[] {
   console.log(`Found intersections ${JSON.stringify(intersections)}`);
 
   return intersections;
+}
+
+function reverseSplinePoints(points: SplinePoint[], start: number, end: number): SplinePoint[] {
+  console.log(`Reversing points from ${start} to ${end}`);
+  // Extract the portion to reverse
+  let subArray = points.slice(start, end + 1);
+  console.log(`Subarray: ${JSON.stringify(subArray)}`);
+
+  // Reverse the extracted portion
+  subArray.reverse();
+  console.log(`Subarray reversed: ${JSON.stringify(subArray)}`);
+
+  let newPoints = points;
+  newPoints.splice(start, subArray.length, ...subArray);
+  console.log(`newPoints: ${JSON.stringify(newPoints)}`);
+
+  newPoints = newPoints
+    .map((p, index) => ({...p, index}));
+  console.log(`newPoints reindexed: ${JSON.stringify(newPoints)}`);
+
+  return newPoints;
+}
+
+export function fixIntersection(points: SplinePoint[], intersection: Intersection): SplinePoint[] {
+  const indices = [
+    intersection.segment1.start.index,
+    intersection.segment1.end.index,
+    intersection.segment2.start.index,
+    intersection.segment2.end.index,
+  ];
+  const start = Math.min(...indices);
+  const end = Math.max(...indices);
+
+  console.log(`Intersection starts at ${start} and ends at ${end}`);
+
+  const first = (start + 1) % points.length;
+  const last = (end - 1);
+
+  return reverseSplinePoints(points, first, last);
+}
+
+// LeBlanc Algorithm implementation
+export function untangleSpline(points: SplinePoint[]): SplinePoint[] {
+  let updatedPoints = points;
+  let intersections = findSelfIntersections(updatedPoints);
+
+  if (intersections.length > 0) {
+    const intersection = intersections[0];
+    updatedPoints = fixIntersection(updatedPoints, intersection);
+  }
+
+  return updatedPoints;
 }

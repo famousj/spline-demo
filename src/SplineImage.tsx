@@ -34,6 +34,12 @@ const SplineImage: React.FC = () => {
     setPoints(prev => [...prev, point]);
   }
 
+  function fixIntersections() {
+    const updatedPoints = splinemath.untangleSpline(points);
+
+    setPoints(updatedPoints);
+  }
+
   function handleImageClick(event: React.MouseEvent<HTMLImageElement>) {
     console.log('Image clicked');
 
@@ -150,7 +156,12 @@ const SplineImage: React.FC = () => {
           onTensionChange={setTension}
         />
       </div>
-
+      <button 
+        onClick={fixIntersections}
+        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+      >
+        Fix Intersections
+      </button>
     </div>
   );
 };

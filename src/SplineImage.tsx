@@ -26,7 +26,7 @@ const SplineImage: React.FC = () => {
     setPoints(prev =>  {
       return prev
         .filter(p => p != point)
-        .map((circle, index) => ({...circle, index}))
+        .map((point, index) => ({...point, index}))
     });
   }
 

@@ -19,6 +19,7 @@ const TensionSelector: React.FC<TensionSelectorProps> = ({ tension, onTensionCha
         onChange={(e) => onTensionChange(parseFloat(e.target.value))}
         className="w-64 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
       />
+      <p className="mr-2">{tension}</p>
     </div>
   );
 };

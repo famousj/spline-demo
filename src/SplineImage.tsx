@@ -8,6 +8,9 @@ import * as splinemath from './splinemath';
 const SplineImage: React.FC = () => {
   const [points, setPoints] = useState<SplinePoint[]>([]);
   const [tension, setTension] = useState<number>(0.5);
+  const [showIndices, setShowIndices] = useState<boolean>(true);
+  const [showIntersections, setShowIntersections] = useState<boolean>(true);
+
   //const [intersections, setIntersections] = useState<{x: number, y: number}[]>([]);
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -77,6 +80,7 @@ const SplineImage: React.FC = () => {
      
       svg.selectAll('g').remove();
       svg.selectAll('path').remove();
+      svg.selectAll('text').remove();
       svg.selectAll('.intersection-point').remove();
 
       if (points.length >= 3) {
@@ -97,8 +101,7 @@ const SplineImage: React.FC = () => {
       
       const intersections = splinemath.findSelfIntersections(points);
 
-      // Render intersection points
-      if (intersections.length > 0) {
+      if (showIntersections && intersections.length > 0) {
         svg.selectAll('.intersection-point')
           .data(intersections)
           .enter()
@@ -125,15 +128,18 @@ const SplineImage: React.FC = () => {
         .attr('fill', pointColor)
         .attr('stroke', pointOutlineColor)
 
-      pointGroup
-        .append('text')
-        .attr('x', d => d.x)
-        .attr('y', d => d.y + 2)
-        .attr('text-anchor', 'middle')
-        .attr('dominant-baseline', 'middle')
-        .attr('fill', 'black')
-        .text(d => d.index.toString());
-  }, [points, tension]);
+      if (showIndices) {
+        pointGroup
+          .append('text')
+          .attr('x', d => d.x)
+          .attr('y', d => d.y + 2)
+          .attr('text-anchor', 'middle')
+          .attr('dominant-baseline', 'middle')
+          .attr('fill', 'black')
+          .text(d => d.index.toString());
+      }
+
+  }, [points, tension, showIndices, showIntersections]);
 
   return (
     <div className="w-full max-w-[50vw] mx-auto p-4">
@@ -156,6 +162,24 @@ const SplineImage: React.FC = () => {
           onTensionChange={setTension}
         />
       </div>
+      <label className="flex items-center space-x-2">
+        <input 
+          type="checkbox" 
+          checked={showIndices}
+          onChange={() => setShowIndices(!showIndices)}
+          className="form-checkbox"
+        />
+        <span>Show Point Labels</span>
+      </label>
+      <label className="flex items-center space-x-2">
+        <input 
+          type="checkbox" 
+          checked={showIntersections}
+          onChange={() => setShowIntersections(!showIntersections)}
+          className="form-checkbox"
+        />
+        <span>Show Intersections</span>
+      </label>
       <button 
         onClick={fixIntersections}
         className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"

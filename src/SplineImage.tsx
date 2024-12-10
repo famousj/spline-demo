@@ -14,12 +14,16 @@ const SplineImage: React.FC = () => {
 
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const ultrasoundImageUrl = 'https://www.eu-focus.europeanurology.com/cms/10.1016/j.euf.2015.06.003/asset/c0a002b8-7205-4248-b3bd-342bfb5a4161/main.assets/gr1.jpg';
+  const ultrasoundImageUrl = `${process.env.PUBLIC_URL}/imgs/ultrasound.jpg`;
   const plainImageUrl = `${process.env.PUBLIC_URL}/imgs/british_racing_green.jpg`;
   const pointRadius = 10;
 
   const pointColor = "yellow";
   const pointOutlineColor = "black";
+
+  function imageUrl(): string {
+    return useUltrasoundImage ? ultrasoundImageUrl : plainImageUrl;
+  }
 
   function getClickedPoint(x: number, y: number): SplinePoint | undefined {
     return points.find(p => Math.sqrt(Math.pow(x - p.x, 2) + Math.pow(y - p.y, 2)) <= pointRadius);
@@ -149,7 +153,7 @@ const SplineImage: React.FC = () => {
     <div className="w-full max-w-[50vw] mx-auto p-4">
       <div className="relative">
         <img 
-          src={useUltrasoundImage ? ultrasoundImageUrl : plainImageUrl }
+          src={imageUrl()}
           onClick={handleImageClick}
           className="w-full cursor-pointer"
           draggable="false"

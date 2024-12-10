@@ -10,12 +10,12 @@ const SplineImage: React.FC = () => {
   const [tension, setTension] = useState<number>(0.5);
   const [showIndices, setShowIndices] = useState<boolean>(true);
   const [showIntersections, setShowIntersections] = useState<boolean>(true);
-
-  //const [intersections, setIntersections] = useState<{x: number, y: number}[]>([]);
+  const [useUltrasoundImage, setUseUltrasoundImage] = useState<boolean>(true);
 
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const imageUrl = 'https://www.eu-focus.europeanurology.com/cms/10.1016/j.euf.2015.06.003/asset/c0a002b8-7205-4248-b3bd-342bfb5a4161/main.assets/gr1.jpg';
+  const ultrasoundImageUrl = 'https://www.eu-focus.europeanurology.com/cms/10.1016/j.euf.2015.06.003/asset/c0a002b8-7205-4248-b3bd-342bfb5a4161/main.assets/gr1.jpg';
+  const plainImageUrl = `${process.env.PUBLIC_URL}/imgs/british_racing_green.jpg`;
   const pointRadius = 10;
 
   const pointColor = "yellow";
@@ -23,6 +23,10 @@ const SplineImage: React.FC = () => {
 
   function getClickedPoint(x: number, y: number): SplinePoint | undefined {
     return points.find(p => Math.sqrt(Math.pow(x - p.x, 2) + Math.pow(y - p.y, 2)) <= pointRadius);
+  }
+
+  function clearPoints() {
+    setPoints([]);
   }
 
   function removePoint(point: SplinePoint) {
@@ -110,7 +114,7 @@ const SplineImage: React.FC = () => {
           .attr('cx', d => d.point.x)
           .attr('cy', d => d.point.y)
           .attr('r', 10)
-          .attr('fill', 'green');
+          .attr('fill', 'magenta');
       }
 
       const pointGroup = svg.selectAll('g')
@@ -145,7 +149,7 @@ const SplineImage: React.FC = () => {
     <div className="w-full max-w-[50vw] mx-auto p-4">
       <div className="relative">
         <img 
-          src={imageUrl}
+          src={useUltrasoundImage ? ultrasoundImageUrl : plainImageUrl }
           onClick={handleImageClick}
           className="w-full cursor-pointer"
           draggable="false"
@@ -156,36 +160,51 @@ const SplineImage: React.FC = () => {
           className="absolute top-0 left-0 w-full h-full pointer-events-none"
         />
       </div>
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col space-y-2 mt-2">
         <TensionSelector 
           tension={tension} 
           onTensionChange={setTension}
         />
+        <label className="flex items-center space-x-2">
+          <input 
+            type="checkbox" 
+            checked={useUltrasoundImage}
+            onChange={() => setUseUltrasoundImage(!useUltrasoundImage)}
+            className="form-checkbox"
+          />
+          <span>Use Ultrasound Image Background </span>
+        </label>
+        <label className="flex items-center space-x-2">
+          <input 
+            type="checkbox" 
+            checked={showIndices}
+            onChange={() => setShowIndices(!showIndices)}
+            className="form-checkbox"
+          />
+          <span>Show Point Labels</span>
+        </label>
+        <label className="flex items-center space-x-2">
+          <input 
+            type="checkbox" 
+            checked={showIntersections}
+            onChange={() => setShowIntersections(!showIntersections)}
+            className="form-checkbox"
+          />
+          <span>Show Intersections</span>
+        </label>
+         <button 
+          onClick={fixIntersections}
+          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+        >
+          Fix Intersections
+        </button>
+        <button 
+          onClick={clearPoints}
+          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+        >
+          Clear Points
+        </button>
       </div>
-      <label className="flex items-center space-x-2">
-        <input 
-          type="checkbox" 
-          checked={showIndices}
-          onChange={() => setShowIndices(!showIndices)}
-          className="form-checkbox"
-        />
-        <span>Show Point Labels</span>
-      </label>
-      <label className="flex items-center space-x-2">
-        <input 
-          type="checkbox" 
-          checked={showIntersections}
-          onChange={() => setShowIntersections(!showIntersections)}
-          className="form-checkbox"
-        />
-        <span>Show Intersections</span>
-      </label>
-      <button 
-        onClick={fixIntersections}
-        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
-      >
-        Fix Intersections
-      </button>
     </div>
   );
 };

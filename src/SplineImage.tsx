@@ -45,7 +45,30 @@ const SplineImage: React.FC = () => {
     setPoints(prev => [...prev, point]);
   }
 
-  function fixIntersections() {
+  function generateRandomPoints() {
+    if (!svgRef.current) return;
+    const svg = svgRef.current;
+   
+    const svgRect = svg.getBoundingClientRect();
+
+    const randomPointCount = 30;
+
+    const newPoints: SplinePoint[] = Array.from({ length: 30 }, (_, index) => ({
+      x: Math.random() * svgRect.width,
+      y: Math.random() * svgRect.height,
+      index: index
+    }));
+
+    setPoints(newPoints);
+  }
+
+  function handleFixSingleIntersection() {
+    const updatedPoints = splinemath.untangleSpline(points, true);
+
+    setPoints(updatedPoints);
+  }
+
+  function handleFixIntersections() {
     const updatedPoints = splinemath.untangleSpline(points);
 
     setPoints(updatedPoints);
@@ -196,11 +219,23 @@ const SplineImage: React.FC = () => {
           />
           <span>Show Intersections</span>
         </label>
-         <button 
-          onClick={fixIntersections}
+        <button 
+          onClick={generateRandomPoints}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+        >
+          Generate Random Points
+        </button>
+        <button 
+          onClick={handleFixSingleIntersection}
           className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
         >
-          Fix Intersections
+          Fix Single Intersections
+        </button>
+        <button 
+          onClick={handleFixIntersections}
+          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+        >
+          Fix All Intersections
         </button>
         <button 
           onClick={clearPoints}

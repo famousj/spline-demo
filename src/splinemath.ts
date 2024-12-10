@@ -161,13 +161,17 @@ export function fixIntersection(points: SplinePoint[], intersection: Intersectio
 }
 
 // LeBlanc Algorithm implementation
-export function untangleSpline(points: SplinePoint[]): SplinePoint[] {
+export function untangleSpline(points: SplinePoint[], fixOneIntersection: boolean = false): SplinePoint[] {
   let updatedPoints = points;
   let intersections: Intersection[] = findSelfIntersections(updatedPoints);
  
   while (intersections.length > 0) {
     const intersection = intersections[0];
     updatedPoints = fixIntersection(updatedPoints, intersection);
+
+    if (fixOneIntersection) {
+      return updatedPoints;
+    }
 
     intersections = findSelfIntersections(updatedPoints);
   }

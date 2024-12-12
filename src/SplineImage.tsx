@@ -6,11 +6,16 @@ import SplinePoint from './SplinePoint';
 import * as splinemath from './splinemath';
 
 const SplineImage: React.FC = () => {
+  const pointColor = "yellow";
+  const noFillColor = "none"
+  const yellowFillColor = "rgba(255, 255, 0, 0.3)"
+
   const [points, setPoints] = useState<SplinePoint[]>([]);
   const [tension, setTension] = useState<number>(0.5);
   const [showIndices, setShowIndices] = useState<boolean>(true);
   const [showIntersections, setShowIntersections] = useState<boolean>(true);
   const [useUltrasoundImage, setUseUltrasoundImage] = useState<boolean>(true);
+  const [fillColor, setFillColor] = useState<string>(yellowFillColor);
 
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -18,7 +23,6 @@ const SplineImage: React.FC = () => {
   const plainImageUrl = `${process.env.PUBLIC_URL}/imgs/british_racing_green.jpg`;
   const pointRadius = 10;
 
-  const pointColor = "yellow";
   const pointOutlineColor = "black";
 
   function imageUrl(): string {
@@ -51,15 +55,20 @@ const SplineImage: React.FC = () => {
    
     const svgRect = svg.getBoundingClientRect();
 
-    const randomPointCount = 30;
+    const randomPointCount = 100;
 
-    const newPoints: SplinePoint[] = Array.from({ length: 30 }, (_, index) => ({
+    const newPoints: SplinePoint[] = Array.from({ length: randomPointCount }, (_, index) => ({
       x: Math.random() * svgRect.width,
       y: Math.random() * svgRect.height,
       index: index
     }));
 
     setPoints(newPoints);
+  }
+
+  function toggleFillColor() {
+    const color = (fillColor == noFillColor) ? yellowFillColor : noFillColor;
+    setFillColor(color);
   }
 
   function handleFixSingleIntersection() {
@@ -124,7 +133,7 @@ const SplineImage: React.FC = () => {
         svg.append("path")
           .datum(points)
           .attr("d", lineGenerator)
-          .attr("fill", "none")
+    	  .attr("fill", fillColor)
           .attr("stroke", pointColor)
           .attr("stroke-width", 2)
           .attr('opacity', 0.7);
@@ -170,7 +179,7 @@ const SplineImage: React.FC = () => {
           .text(d => d.index.toString());
       }
 
-  }, [points, tension, showIndices, showIntersections]);
+  }, [points, tension, showIndices, showIntersections, fillColor]);
 
   return (
     <div className="w-full max-w-[50vw] mx-auto p-4">
@@ -219,6 +228,15 @@ const SplineImage: React.FC = () => {
           />
           <span>Show Intersections</span>
         </label>
+        <label className="flex items-center space-x-2">
+          <input 
+            type="checkbox" 
+            checked={fillColor == yellowFillColor}
+            onChange={toggleFillColor}
+            className="form-checkbox"
+          />
+          <span>Fill In Outline</span>
+        </label>
         <button 
           onClick={generateRandomPoints}
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
@@ -227,13 +245,13 @@ const SplineImage: React.FC = () => {
         </button>
         <button 
           onClick={handleFixSingleIntersection}
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
         >
           Fix Single Intersections
         </button>
         <button 
           onClick={handleFixIntersections}
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
         >
           Fix All Intersections
         </button>

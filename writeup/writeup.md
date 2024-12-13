@@ -138,21 +138,22 @@ The app has never failed to come up with a path without intersections, even when
 There is one issue: this algorithm compares straight lines between the spline points, i.e. with the tension set to the maximum.  When you reduce the tension, you get a smoother shape but sometimes the curves can intersect with each other.  Or sometimes, with a random set of points, you will see some artifacts like loops hanging off the end of points.  These could be corrected by adjusting the tension until the collisions disappear.
 
 ![](imgs/loop-artifact.png)
-*Points 2, 3, and 4 make a loop. Note the curve between points 2 and 3 makes a loop.  If you draw a straight line between these two points, the loop disappears.*
+*Points 2, 3, and 4 make a loop. Note the curve between points 2 and 3.  If you draw a straight line between these two points, the loop disappears.*
 
 These weird artifacts tend to happen when you have a lot of points with abrupt changes in direction.  Given this was designed to outline the prostate, which has a fairly round shape, this didn’t seem likely to be an issue.
 
-Also, one of the features of curves splines is, if you can still get a nice shape with fewer points if you place them right.
+Also, one of the features of curves splines is, you can get a nice shape with fewer points if you place them right.
 
 ![](imgs/a-few-points.png)
 
 ![](imgs/many-points.png)
+*More points but the shape isn't much more accurate*
 
-There was one issue I was never quite able to resolve.  Since the prostate is not a convex shape, it's possible to place the points correctly but still end up with an outline that has no intersections, but isn't right.
+There was one issue I was never quite able to resolve.  Since the prostate is not fully convex, it's possible to end up with an outline that has no intersections but isn't right, even though all the points were placed correctly.
 
 ![](imgs/non-convex.png)
 
-(I added a "clear points" button to the app in case this or something else unexpected happened.)
+(In the app, I added a "clear points" button in case this or something else unexpected happened.)
 
 ## The Sad Conclusion
 
@@ -170,17 +171,17 @@ My biggest regret about all of this is that I did not go on to develop this idea
 
 (However, if you do make any use of this technique, please feel free to refer this as the LeBlanc Algorithm.)
 
-But I suspect there is more to this than outlining one particular part of the male anatomy.  There are some avenues of exploration that might be worth looking into by someone (or myself if I ever have more spare time).
+But I suspect there is more you could use this for than just outlining one particular part of the male anatomy.  I have thought of a few avenues of exploration that might be worth looking into by someone (or myself if I ever have more spare time).
 
 The problem of detecting and fixing intersections shows up in computer graphics, and thus this technique or something like it could prove useful.
 
-Also, this problem is a variant of the Traveling Salesman Problem.  It seems like a path with no intersections might be a decent first-approximation.  Much smarter people than I have looked into that problem, so I doubt this could contribute to that, but it’s possible.
+Also, this problem is a variant of the Traveling Salesman Problem.  It seems like a path with no intersections might be a decent first-approximation.  Much smarter people than I have looked into that problem, so I doubt this could contribute much of anything, but it’s possible.
 
 There might also be a similar approach you could use for 3D surfaces, but applying this with an additional dimension would require some thought.
 
 ## Try It Yourself
 
-Between the sad demise of the company I wrote this code for and a catastrophic hard drive failure, all the original code (which was written in C#) was lost.  I rewrote this from memory in React and Typescript using the D3 package to generate the cardinal splines.
+As previously mentioned, between the sad demise of the company I wrote this code for and a catastrophic hard drive failure, all the original code was lost.  I rewrote this from memory in React and Typescript using the D3 package to generate the cardinal splines.
 
 You can find the code here:
 
@@ -192,9 +193,9 @@ If you’d like to try it out for yourself, you can go here:
 
 ## A Final Thought About LLMs 
 
-The original purpose of this exercise was as a refresher on React and TypeScript.  Since my original code was lost in the mists of time, I thought this would be a good small project to recreate it in a more accessible form (rather than as part of a Windows .exe), and then do the writeup you’re reading.
+The original purpose of this exercise was as a refresher on React and TypeScript.  Since my original code was lost in the mists of time, I thought this would be a good small project to recreate it in a more accessible form (rather than as part of a proprietary Windows program), and then do the writeup you’re reading.
 
-I also made extensive use of [Claude](https://claude.a) in writing this.  That process probably merits an article even longer than this, but it was interesting looking at the value and limitations of AI-assisted software development.  (My high-level takeaway: I would not throw any code that Claude generated into production without looking it over closely.)
+I also made extensive use of [Claude](https://claude.a) in writing this.  That process probably merits an article even longer than this, but it was interesting looking at the value and limitations of AI-assisted software development.  (My high-level takeaway: it's extremely helpful, but I would not throw any code that Claude generated into production without looking it over closely.)
 
 At some point, I asked Claude to solve this problem.  Specifically I asked, “if I have an array of 100 points, can you make a path between the points that has no intersections?”
 

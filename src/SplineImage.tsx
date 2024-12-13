@@ -11,7 +11,7 @@ const SplineImage: React.FC = () => {
   const yellowFillColor = "rgba(255, 255, 0, 0.3)"
 
   const [points, setPoints] = useState<SplinePoint[]>([]);
-  const [tension, setTension] = useState<number>(0.5);
+  const [tension, setTension] = useState<number>(0.0);
   const [showIndices, setShowIndices] = useState<boolean>(true);
   const [showIntersections, setShowIntersections] = useState<boolean>(true);
   const [useUltrasoundImage, setUseUltrasoundImage] = useState<boolean>(true);

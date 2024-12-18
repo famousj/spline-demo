@@ -2,7 +2,7 @@
 
 There's a writeup about this here:
 
-[Curved Splines: A Case Study](writeup/writeup.md)
+[Curved Splines: A Case Study](https://leblanc.pt/splines.html)
 
 This is deployed to the web here if you would like to try it out:
 
